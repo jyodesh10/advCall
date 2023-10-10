@@ -14,7 +14,6 @@ class SaveCall extends StatefulWidget {
 }
 
 class _SaveCallState extends State<SaveCall> {
-  static const batteryChannel = MethodChannel("com.example.headset_call/battery");
   String text = "Stop Service";
   late final Timer timer;
   List<String> logs = [];
