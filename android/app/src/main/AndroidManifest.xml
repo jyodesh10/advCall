@@ -1,4 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <application
         android:label="adv_call"
         android:name="${applicationName}"
@@ -29,5 +37,18 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <receiver android:name="flutter.moum.headset_event.HeadsetBroadcastReceiver"
+            android:exported="true">
+           <intent-filter>
+               <action android:name="android.intent.action.HEADSET_PLUG" />
+               <action android:name="android.intent.action.MEDIA_BUTTON" />
+           </intent-filter>
+       </receiver>
+       <receiver android:name="android.support.v4.media.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON"/>
+            </intent-filter>
+       </receiver>
     </application>
 </manifest>
