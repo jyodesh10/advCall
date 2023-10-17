@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
-
 import 'package:adv_call/src/view/call/save_call.dart';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -10,15 +9,17 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:headset_connection_event/headset_event.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Permission.phone.request();
   runApp(const MyApp());
 }
 
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
-
   /// OPTIONAL, using custom notification channel id
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'my_foreground', // id
@@ -26,38 +27,26 @@ Future<void> initializeService() async {
     description: 'This channel is used for important notifications.',// description
     importance: Importance.low, // importance must be at low or higher level
   );
-
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
-
-    await flutterLocalNotificationsPlugin.initialize(
-      const InitializationSettings(
-        android: AndroidInitializationSettings("@mipmap/ic_launcher"),
-        iOS: IOSInitializationSettings(),
-      ),
-      // onSelectNotification:  (String? payload) async{
-      //   if(payload != null){
-      //     await FlutterPhoneDirectCaller.callNumber("9863021878");
-      //   }
-      // }
-    );
-
-
-  await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.createNotificationChannel(channel);
-
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  await flutterLocalNotificationsPlugin.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings("@mipmap/ic_launcher"),
+      iOS: IOSInitializationSettings(),
+    ),
+    // onSelectNotification:  (String? payload) async{
+    //   if(payload != null){
+    //     await FlutterPhoneDirectCaller.callNumber("9863021878");
+    //   }
+    // }
+  );
+  await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       // this will be executed when app is in foreground or background in separated isolate
       onStart: onStart,
-
       // auto start service
       autoStart: true,
       isForegroundMode: true,
-
       notificationChannelId: 'my_foreground',
       initialNotificationTitle: 'CALL SERVICE',
       initialNotificationContent: 'Initializing',
@@ -66,21 +55,18 @@ Future<void> initializeService() async {
     iosConfiguration: IosConfiguration(
       // auto start service
       autoStart: true,
-
       // this will be executed when app is in foreground in separated isolate
       onForeground: onStart,
-
       // you have to enable background fetch capability on xcode project
       onBackground: onIosBackground,
     ),
   );
-
   service.startService();
 }
 
 // to ensure this is executed
 // run app from xcode, then from xcode menu, select Simulate Background Fetch
-
+// ahead-of-time (AOT)=
 @pragma('vm:entry-point')
 Future<bool> onIosBackground(ServiceInstance service) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,7 +80,6 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 
   return true;
 }
-
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   // Only available for flutter 3.0.0 and later
@@ -107,8 +92,7 @@ void onStart(ServiceInstance service) async {
   await preferences.setString("hello", "world");
 
   /// OPTIONAL when use custom notification
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   if (service is AndroidServiceInstance) {
     service.on('setAsForeground').listen((event) {
@@ -229,6 +213,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Advanced Call',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,

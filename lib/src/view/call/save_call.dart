@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -51,7 +52,14 @@ class _SaveCallState extends State<SaveCall> {
       });
     headsetPlugin.setListener((val) {
       setState(() {
-          _headsetState = val;
+        _headsetState = val;
+        if(val == HeadsetState.DISCONNECT){
+          log('Disconnected Headset');
+          callNumber();
+        }
+        else{
+          log('Connected Headset');
+        }
       });
     });
   }
@@ -70,7 +78,7 @@ class _SaveCallState extends State<SaveCall> {
         child: Center(
           child: Column(
             children: [
-              const SizedBox(height: 200,),
+              const SizedBox(height: 200),
               //Device Info
               StreamBuilder<Map<String, dynamic>?>(
                 stream: FlutterBackgroundService().on('update'),
@@ -91,32 +99,32 @@ class _SaveCallState extends State<SaveCall> {
                   );
                 },
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(height: 20),
               //Headset Status
               Icon(
                 Icons.headset,
                 size: 35,
                 color: _headsetState == HeadsetState.CONNECT
-                    ? Colors.green
-                    : Colors.red,
+                ? Colors.green
+                : Colors.red,
               ),
-              const SizedBox(height: 10,),
-              Text('State : ${_headsetState ?? "Not Connected"}\n', style: const TextStyle(fontSize: 16),),
-              const SizedBox(height: 35,),
+              const SizedBox(height: 10),
+              Text('State : ${_headsetState ?? "Not Connected"}\n', style: const TextStyle(fontSize: 16)),
+              const SizedBox(height: 35),
               ElevatedButton(
                 child: const Text("Foreground Mode"),
                 onPressed: () {
                   FlutterBackgroundService().invoke("setAsForeground");
                 },
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(height: 20),
               ElevatedButton(
                 child: const Text("Background Mode"),
                 onPressed: () {
                   FlutterBackgroundService().invoke("setAsBackground");
                 },
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(height: 20),
               //Stop App
               ElevatedButton(
                 child: Text(text),
@@ -128,7 +136,6 @@ class _SaveCallState extends State<SaveCall> {
                   } else {
                     service.startService();
                   }
-      
                   if (!isRunning) {
                     text = 'Stop Service';
                   } else {
@@ -137,7 +144,7 @@ class _SaveCallState extends State<SaveCall> {
                   setState(() {});
                 },
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(height: 20),
               // Change Number
               InkWell(
                 child: Container(
@@ -165,7 +172,7 @@ class _SaveCallState extends State<SaveCall> {
                   showPopUp();
                 },
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(height: 20),
               //Test Call
               InkWell(
                 child: Container(
@@ -213,11 +220,16 @@ class _SaveCallState extends State<SaveCall> {
   //Call number
   callNumber() async{//set the number here
     var contact = await getStoredNumber();
-    AndroidIntent intent = AndroidIntent(
-      action: 'android.intent.action.CALL',
-      data: 'tel:${contact ?? "9863021878"}',
-    );
-    await intent.launch();
+    if(phoneNumber != "" && phoneNumber!=null){
+      AndroidIntent intent = AndroidIntent(
+        action: 'android.intent.action.CALL',
+        data: 'tel:${contact ?? "9863021878"}',
+      );
+      await intent.launch();
+    }
+    else{
+      log("Empty phone no.");
+    }
   }
 
   //Show Pop Up
@@ -242,7 +254,7 @@ class _SaveCallState extends State<SaveCall> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text("Enter a Contact that you want to call", style: TextStyle(fontSize: 18), textAlign: TextAlign.center,),
-                      const SizedBox(height: 20,),
+                      const SizedBox(height: 20),
                       Container(
                         height: 60,
                         width: 200,
@@ -275,7 +287,7 @@ class _SaveCallState extends State<SaveCall> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 20,),
+                      const SizedBox(height: 20),
                       //Save Contact to Shared prefrence
                       ElevatedButton(
                         onPressed: () {
@@ -294,7 +306,8 @@ class _SaveCallState extends State<SaveCall> {
                                 margin: EdgeInsets.only(
                                   bottom: MediaQuery.of(context).size.height - 100,
                                   right: 20,
-                                  left: 20),
+                                  left: 20
+                                ),
                                 behavior: SnackBarBehavior.floating,
                                 content: const Text("Please Enter a Contact First.", style: TextStyle(color: Colors.white),),
                               )
@@ -313,6 +326,7 @@ class _SaveCallState extends State<SaveCall> {
       );
     } else{
       popStatus = true;
+      // ignore: use_build_context_synchronously
       return showDialog(
         context: context, 
         builder: (context){
